@@ -1,0 +1,81 @@
+plugins {
+    id 'java'
+    id 'io.quarkus'
+    // Eclipse のアノテーションプロセッシング関連の設定ファイルを生成するプラグイン
+    id 'com.diffplug.eclipse.apt' version '4.3.0'
+    // Doma を使ったビルドをサポートするプラグイン
+    id("org.domaframework.doma.compile") version "4.0.0"
+}
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
+dependencies {
+    annotationProcessor 'org.seasar.doma:doma-processor:3.11.0'
+    
+    implementation enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
+    
+    implementation 'io.quarkus:quarkus-arc'
+    
+    implementation 'io.quarkus:quarkus-rest'
+    implementation 'io.quarkus:quarkus-rest-jsonb'
+    implementation 'io.quarkus:quarkus-rest-qute'
+    
+    implementation 'io.quarkus:quarkus-agroal'
+    implementation 'io.quarkus:quarkus-jdbc-h2'
+    implementation 'org.seasar.doma:doma-core:3.11.0'
+    implementation 'io.quarkiverse.doma:quarkus-doma:1.0.6'
+    
+    testImplementation 'io.quarkus:quarkus-junit5'
+    testImplementation 'io.rest-assured:rest-assured'
+}
+
+group = 'epsilongtmyon'
+version = '1.0.0-SNAPSHOT'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+test {
+    systemProperty "java.util.logging.manager", "org.jboss.logmanager.LogManager"
+}
+compileJava {
+    options.encoding = 'UTF-8'
+    options.compilerArgs << '-parameters'
+}
+
+compileTestJava {
+    options.encoding = 'UTF-8'
+}
+
+
+// Eclipse 関連の設定
+eclipse {
+    // .classpath ファイルに関する設定
+    classpath {
+        file {
+            whenMerged { classpath ->
+                // アノテーションプロセッサーで生成したソースコードを保存するフォルダ
+                def folder = new org.gradle.plugins.ide.eclipse.model.SourceFolder(".apt_generated", "bin/main")
+                // クラスパスに追加
+                classpath.entries.add(folder)
+                // 存在しなければ作成
+                def dir = file(folder.path)
+                if (!dir.exists()) {
+                    dir.mkdir()
+                }
+            }
+        }
+    }
+    // .project ファイルに関する設定
+    project {
+        buildCommand 'org.eclipse.buildship.core.gradleprojectbuilder'
+        natures 'org.eclipse.buildship.core.gradleprojectnature'
+    }
+    // Eclipse から "Refresh Gradle Project" を呼び出した時に実行されるタスク
+    synchronizationTasks 'cleanEclipse', 'eclipse'
+}
